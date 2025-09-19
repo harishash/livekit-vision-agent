@@ -12,10 +12,7 @@ from livekit.agents.llm import ImageContent
 from livekit.agents.utils.images import encode, EncodeOptions, ResizeOptions
 from livekit.plugins import (
     openai,
-    cartesia,
-    deepgram,
     noise_cancellation,
-    silero,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
@@ -123,11 +120,9 @@ class VisionAssistant(Agent):
 async def entrypoint(ctx: agents.JobContext):
     # Vision assistant with OpenAI
     session = AgentSession(
-        stt=deepgram.STT(model="nova-3", language="multi"),
-        llm=openai.LLM(model="gpt-4o"),  # Make sure to use a model with vision capabilities
-        tts=cartesia.TTS(model="sonic-2", voice="f786b574-daa5-4673-aa0c-cbe3e8534c02"),
-        vad=silero.VAD.load(),
-        turn_detection=MultilingualModel(),
+        llm=openai.realtime.RealtimeModel(
+            voice="coral"
+        )
     )
 
     # Optional: Add initial image context
