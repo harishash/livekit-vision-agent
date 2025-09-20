@@ -6,8 +6,16 @@
 from dotenv import load_dotenv
 import asyncio
 import base64
+from knowledge_manager import KnowledgeManager
 from livekit import agents, rtc
-from livekit.agents import AgentSession, Agent, RoomInputOptions, ChatContext, JobContext, get_job_context
+from livekit.agents import (
+    AgentSession,
+    Agent,
+    RoomInputOptions,
+    ChatContext,
+    JobContext,
+    get_job_context,
+)
 from livekit.agents.llm import ImageContent
 from livekit.agents.utils.images import encode, EncodeOptions, ResizeOptions
 from livekit.plugins import (
@@ -19,16 +27,34 @@ from livekit.plugins.turn_detector.multilingual import MultilingualModel
 load_dotenv()
 
 
+# Initialize KnowledgeManager and embed knowledge into instructions
+knowledge_manager = KnowledgeManager()
+BASE_INSTRUCTIONS = (
+    "You are Melissa, a friendly and concise technical support AI from Webshop Manager (WSM). "
+    "You have vision capabilities to analyze images and the user's camera feed. "
+    "When greeting at the start of a call or when a participant joins, always greet in English and introduce yourself as Melissa from WSM. "
+    "Keep greetings short and professional. Provide clear, step-by-step suggestions when helpful."
+)
+KB_GUARDRAILS = (
+    "CRITICAL KNOWLEDGE RULES: Only answer using the information contained in the KNOWLEDGE BASE provided here. "
+    "Do not use outside knowledge or make assumptions. If the answer is not explicitly present or cannot be directly derived from the knowledge base, "
+    "reply exactly: 'I don't have that information in my knowledge base.' You may ask one brief clarifying question if it would help locate the answer in the knowledge base. "
+    "If the user's request is outside the product scope described by the knowledge base, politely decline with the same message."
+)
+INSTRUCTIONS = f"{BASE_INSTRUCTIONS}\n\n{KB_GUARDRAILS}"
+
 class VisionAssistant(Agent):
     def __init__(self) -> None:
         self._latest_frame = None
         self._video_stream = None
         self._tasks = []  # Prevent garbage collection of running tasks
-        super().__init__(instructions="You are a helpful voice AI assistant with vision capabilities.")
-    
+        super().__init__(
+            instructions=INSTRUCTIONS
+        )
+
     async def on_enter(self):
         room = get_job_context().room
-        
+
         # Set up byte stream handler for receiving images
         def _image_received_handler(reader, participant_identity):
             task = asyncio.create_task(
@@ -36,26 +62,40 @@ class VisionAssistant(Agent):
             )
             self._tasks.append(task)
             task.add_done_callback(lambda t: self._tasks.remove(t))
-        
+
         # Register handler when the agent joins
         room.register_byte_stream_handler("images", _image_received_handler)
-        
+
+        # Inject guardrails + the latest knowledge base as a system message so it's available to the model
+        chat_ctx = self.chat_ctx.copy()
+        chat_ctx.add_message(
+            role="system",
+            content=f"{KB_GUARDRAILS}\n\n{knowledge_manager.format_knowledge()}",
+        )
+        await self.update_chat_ctx(chat_ctx)
+
         # Look for existing video tracks from remote participants
         for participant in room.remote_participants.values():
             video_tracks = [
-                publication.track for publication in participant.track_publications.values() 
-                if publication.track and publication.track.kind == rtc.TrackKind.KIND_VIDEO
+                publication.track
+                for publication in participant.track_publications.values()
+                if publication.track
+                and publication.track.kind == rtc.TrackKind.KIND_VIDEO
             ]
             if video_tracks:
                 self._create_video_stream(video_tracks[0])
                 break
-        
+
         # Watch for new video tracks
         @room.on("track_subscribed")
-        def on_track_subscribed(track: rtc.Track, publication: rtc.RemoteTrackPublication, participant: rtc.RemoteParticipant):
+        def on_track_subscribed(
+            track: rtc.Track,
+            publication: rtc.RemoteTrackPublication,
+            participant: rtc.RemoteParticipant,
+        ):
             if track.kind == rtc.TrackKind.KIND_VIDEO:
                 self._create_video_stream(track)
-    
+
     async def _image_received(self, reader, participant_identity):
         """Handle images uploaded from the frontend"""
         image_bytes = bytes()
@@ -71,20 +111,25 @@ class VisionAssistant(Agent):
                 "Here's an image I want to share with you:",
                 ImageContent(
                     image=f"data:image/png;base64,{base64.b64encode(image_bytes).decode('utf-8')}"
-                )
+                ),
             ],
         )
         await self.update_chat_ctx(chat_ctx)
-    
-    async def on_user_turn_completed(self, turn_ctx: ChatContext, new_message: dict) -> None:
+
+    async def on_user_turn_completed(
+        self, turn_ctx: ChatContext, new_message: dict
+    ) -> None:
         # Add the latest video frame, if any, to the new message
         if self._latest_frame:
             if isinstance(new_message.content, list):
                 new_message.content.append(ImageContent(image=self._latest_frame))
             else:
-                new_message.content = [new_message.content, ImageContent(image=self._latest_frame)]
+                new_message.content = [
+                    new_message.content,
+                    ImageContent(image=self._latest_frame),
+                ]
             self._latest_frame = None
-    
+
     # Helper method to buffer the latest video frame from the user's track
     def _create_video_stream(self, track: rtc.Track):
         # Close any existing stream (we only want one at a time)
@@ -93,7 +138,7 @@ class VisionAssistant(Agent):
 
         # Create a new stream to receive frames
         self._video_stream = rtc.VideoStream(track)
-        
+
         async def read_stream():
             async for event in self._video_stream:
                 # Process the frame (optionally resize it)
@@ -102,28 +147,24 @@ class VisionAssistant(Agent):
                     EncodeOptions(
                         format="JPEG",
                         resize_options=ResizeOptions(
-                            width=1024,
-                            height=1024,
-                            strategy="scale_aspect_fit"
-                        )
-                    )
+                            width=1024, height=1024, strategy="scale_aspect_fit"
+                        ),
+                    ),
                 )
                 # Store the latest frame for use later
                 self._latest_frame = f"data:image/jpeg;base64,{base64.b64encode(image_bytes).decode('utf-8')}"
-        
+
         # Store the async task
         task = asyncio.create_task(read_stream())
         self._tasks.append(task)
-        task.add_done_callback(lambda t: self._tasks.remove(t) if t in self._tasks else None)
+        task.add_done_callback(
+            lambda t: self._tasks.remove(t) if t in self._tasks else None
+        )
 
 
 async def entrypoint(ctx: agents.JobContext):
     # Vision assistant with OpenAI
-    session = AgentSession(
-        llm=openai.realtime.RealtimeModel(
-            voice="coral"
-        )
-    )
+    session = AgentSession(llm=openai.realtime.RealtimeModel(voice="coral"))
 
     # Optional: Add initial image context
     initial_ctx = ChatContext()
@@ -131,7 +172,7 @@ async def entrypoint(ctx: agents.JobContext):
     # initial_ctx.add_message(
     #     role="user",
     #     content=[
-    #         "Here is a picture to analyze", 
+    #         "Here is a picture to analyze",
     #         ImageContent(image="https://example.com/image.jpg")
     #     ],
     # )
@@ -146,9 +187,9 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     await session.generate_reply(
-        instructions="Greet the user and let them know you can analyze images they share or their camera feed."
+        instructions="In English, greet the user and introduce yourself as Melissa from WSM. Keep it brief. Let them know you can analyze images they share or their camera feed."
     )
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint)) 
+    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
