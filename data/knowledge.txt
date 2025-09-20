@@ -1,0 +1,118 @@
+# Web Shop Manager Customer Support Knowledge Base
+
+## Project Overview
+
+* **Project**: Web Shop Manager
+* **Purpose**: Web Shop Manager is a leading eCommerce solution and website provider, specializing in the automotive industry and other markets with large or complex product catalogs. They offer cloud-based technology to manage large datasets with fitment and product attributes, creating a personalized and user-friendly shopping experience to maximize conversions.
+* **Accolades**: Recognized by the San Diego Business Journal as a Top 100 Company in 2019 and by Inc. 5000 as one of the Fastest Growing Private Companies in America. They boast a high customer support satisfaction score of 4.98 out of 5.00.
+
+---
+
+## Services Offered
+
+Web Shop Manager offers a comprehensive suite of services for eCommerce businesses, primarily as a certified BigCommerce and Shopify Agency. Their services include:
+
+### **Website Development & Management**
+* Front-End & Back-End Development
+* Troubleshooting Critical Issues
+* Website Speed Optimization
+* Base Theme Upgrades
+* User Interface (UI) Optimization and Design
+* Custom Graphics
+
+### **eCommerce Strategy & Growth**
+* Heat and Scroll Map Analysis
+* Site Page Speed Assessments
+* Performance Reporting
+* Quarterly Sprint Roadmaps
+* Google Analytics Customization and Review
+
+### **Accessibility & Compliance**
+* Comprehensive Accessibility Audit
+* Roadmap of Items to Improve
+* Design & Development Implementation
+* Yearly Accessibility Statement
+* ADA & 508 Compliance
+
+### **eCommerce Platform Management**
+* Full management for stores on Shopify, Amazon, WooCommerce, eBay, Etsy, and other platforms.
+* Services include product listing, theme customization, and daily operational management.
+
+---
+
+## Platform Features
+
+The Web Shop Manager platform is equipped with a wide array of features to support eCommerce businesses:
+
+* **Standard Features (All Plans)**:
+    * No transaction fees
+    * Integration with leading payment providers (PayPal, Sage, Authorize.Net)
+    * Responsive, Mobile-First Website Design
+    * Coupons & Discounts
+    * Free Sitewide HTTPS and Dedicated SSL
+    * Real-time shipping quotes (USPS, UPS, FedEx)
+    * Staff Accounts
+    * Product & file storage
+    * Reporting Tools
+    * Google Shopping Feed
+    * Single-Page Checkout
+* **Advanced Features**:
+    * **CMS / Catalog / eCommerce**: Robust content and product management.
+    * **Analytics & Retargeting**: Integration with Google Analytics and Facebook Pixel.
+    * **B2B Functionality**: Customer groups and pricing, exclusive content, and dealer/store locators.
+    * **Advanced Search**: Faceted search with part type grouping.
+    * **Integrations**:
+        * **Reviews**: Yotpo, TurnTo, Google Reviews, TrustPilot
+        * **Shipping & Orders**: ShipWorks, ShipStation, SkuVault, LightSpeed, OrderPigeon
+        * **Marketing**: Tealium, Zapier
+        * **Marketplaces**: ChannelAdvisor, FishBowl
+    * **API Access**: Open API access with RESTful (XML) for custom integrations.
+
+---
+
+## Target Audience
+
+Web Shop Manager's primary target audience consists of:
+
+* **Automotive Parts & Accessories Retailers**: Their platform is specifically designed to handle the complexities of fitment data and large, complex product catalogs common in the automotive industry.
+* **Other Markets with Complex Catalogs**: Any business with a large and intricate product catalog that requires advanced search and filtering capabilities.
+* **Mid-Market and Enterprise Merchants**: They are experienced in managing stores for larger businesses on platforms like BigCommerce and Shopify.
+
+---
+
+## Pricing & Plans
+
+Web Shop Manager offers a tiered pricing structure based on the client's needs and online revenue. The plans are named **Start**, **Grow**, **Scale**, and **Enterprise**.
+
+* **Pricing Model**: Pricing is not publicly listed and requires interested parties to "Request Pricing" for each tier. This indicates a **quote-based pricing model** tailored to the specific needs of each business.
+* **Support Tiers**: Different plans come with varying levels of support: Standard, Professional, Custom, and Premium.
+
+---
+
+## Contact Information
+
+* **Main Phone Line**: (619) 278-0871
+* **After-hours Emergency Phone**: (619) 354-8671
+    * **What constitutes an emergency?**: Website down, search functionality not working, or checkout process is broken.
+* **Email**:
+    * **Sales**: sales@webshopmanager.com
+    * **Support**: support@webshopmanager.com
+    * **Billing**: billing@webshopmanager.com
+* **Hours of Operation**: 7:30am to 5:00pm Pacific Time
+* **Help Center & Ticketing**: [https://help.webshopmanager.com/](https://help.webshopmanager.com/)
+
+---
+
+## FAQ
+
+**Q: What is Web Shop Manager?**
+**A**: Web Shop Manager is a specialized eCommerce platform and service provider, focusing on the automotive industry and other businesses with complex product catalogs. They offer website development, management, and marketing services, and are certified experts in BigCommerce and Shopify.
+
+**Q: What makes Web Shop Manager different from other eCommerce platforms?**
+**A**: Their key differentiator is their expertise in handling large, complex product catalogs with specific attributes, such as vehicle fitment data in the automotive industry. They provide a powerful, cloud-based solution for managing and presenting this data in a user-friendly way.
+
+**Q: Does Web Shop Manager work with small businesses?**
+**A**: While they are experienced with mid-market and enterprise clients, their tiered plans suggest they can cater to a range of business sizes. The best way for a potential client to know for sure is to contact the sales team for a quote.
+
+**Q: I'm having an issue with my website after hours. What should I do?**
+**A**: If your website is down, the search is not working, or the checkout is broken, you can call the after-hours emergency phone number at (619) 354-8671. For non-emergency issues, please submit a ticket through the help center or email support@webshopmanager.com, and it will be addressed during business hours.

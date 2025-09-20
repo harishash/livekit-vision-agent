@@ -8,3 +8,4 @@ python-dotenv>=1.0.0
 # Additional dependencies that may be needed
 asyncio-mqtt>=0.16.0
 aiohttp>=3.8.0 
+llama-index>=0.10.0

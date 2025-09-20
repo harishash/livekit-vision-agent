@@ -1,7 +1,8 @@
 # pip install \
 #   "livekit-agents[deepgram,openai,cartesia,silero,turn-detector]~=1.0" \
 #   "livekit-plugins-noise-cancellation~=0.2" \
-#   "python-dotenv"
+#   "python-dotenv" \
+#   "llama-index>=0.10.0"
 
 from dotenv import load_dotenv
 import asyncio
@@ -15,8 +16,65 @@ from livekit.plugins import (
     noise_cancellation,
 )
 from livekit.plugins.turn_detector.multilingual import MultilingualModel
+from pathlib import Path
+from livekit.agents import llm
+from llama_index.core import (
+    SimpleDirectoryReader,
+    StorageContext,
+    VectorStoreIndex,
+    load_index_from_storage,
+)
 
 load_dotenv()
+
+# Initialize or load a persistent vector index for contextual queries
+THIS_DIR = Path(__file__).parent
+PERSIST_DIR = THIS_DIR / "query-engine-storage"
+if not PERSIST_DIR.exists():
+    # Load documents from ./data and build the index
+    documents = SimpleDirectoryReader(THIS_DIR / "data").load_data()
+    index = VectorStoreIndex.from_documents(documents)
+    # Persist the index to disk for future runs
+    index.storage_context.persist(persist_dir=PERSIST_DIR)
+else:
+    # Load existing index from storage
+    storage_context = StorageContext.from_defaults(persist_dir=PERSIST_DIR)
+    index = load_index_from_storage(storage_context)
+
+@llm.function_tool
+async def query_info(query: str) -> str:
+    """
+    Query the local knowledge base stored in the data/ directory.
+    ALWAYS use this tool to answer user questions. If no relevant info is found,
+    return the string 'KB_NO_MATCH'. On unexpected errors, return 'KB_ERROR'.
+    """
+    try:
+        # First, perform retrieval and check similarity to avoid unrelated answers
+        retriever = index.as_retriever(similarity_top_k=5)
+        try:
+            nodes = await retriever.aretrieve(query)
+        except AttributeError:
+            # Fallback if running in a context where only sync is available
+            nodes = retriever.retrieve(query)
+
+        if not nodes:
+            return "KB_NO_MATCH"
+
+        # Check confidence if scores are available on nodes
+        scores = [getattr(n, "score", None) for n in nodes]
+        scores = [s for s in scores if s is not None]
+        if scores and max(scores) < 0.58:
+            return "KB_NO_MATCH"
+
+        # Run the full query to synthesize an answer from retrieved context
+        query_engine = index.as_query_engine(use_async=True, similarity_top_k=5)
+        res = await query_engine.aquery(query)
+        print("Query result:", res)
+        text = str(res).strip()
+        return text if text else "KB_NO_MATCH"
+    except Exception as e:
+        print("Query tool error:", e)
+        return "KB_ERROR"
 
 
 class VisionAssistant(Agent):
@@ -24,7 +82,16 @@ class VisionAssistant(Agent):
         self._latest_frame = None
         self._video_stream = None
         self._tasks = []  # Prevent garbage collection of running tasks
-        super().__init__(instructions="You are a helpful voice AI assistant with vision capabilities.")
+        super().__init__(
+            instructions=(
+                "You are a voice assistant with vision capabilities that is STRICTLY LIMITED to a local knowledge base. "
+                "Hard rules: (1) For EVERY user message, you MUST call the `query_info` tool to get the answer. "
+                "(2) You are FORBIDDEN from answering using your own knowledge or external information. "
+                "(3) If the tool returns 'KB_NO_MATCH' or 'KB_ERROR', politely say: 'I'm only able to answer based on my knowledge base, and I couldn't find that information.' "
+                "(4) When the tool returns an answer, speak it concisely and do not add information not present in the tool output."
+            ),
+            tools=[query_info],
+        )
     
     async def on_enter(self):
         room = get_job_context().room
@@ -146,7 +213,7 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     await session.generate_reply(
-        instructions="Greet the user and let them know you can analyze images they share or their camera feed."
+        instructions="Greet the user in ENGLISH and introduce yourself as a WSM Customer Support representative named Melissa. Let them know you can help them with their queries related to Webshop Manager. NEVER use any other language other than ENGLISH."
     )
 
 
