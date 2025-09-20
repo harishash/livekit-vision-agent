@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  livekit:  # this will create a container with hostname "livekit"
+    image: livekit/livekit-server
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
+      
+  agent:
+    build: .
+    depends_on:
+      - livekit
+    environment:
+      - LIVEKIT_URL=ws://livekit:7880  
